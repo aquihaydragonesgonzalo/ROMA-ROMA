@@ -19,9 +19,11 @@ const MapComponent: React.FC<MapProps> = ({ activities, userLocation, focusedLoc
   const mapInstanceRef = useRef<L.Map | null>(null);
   const layersRef = useRef<L.Layer[]>([]);
 
+  // Initialize Map
   useEffect(() => {
     if (!mapContainerRef.current || mapInstanceRef.current) return;
 
+    // Center on Rome center by default
     const map = L.map(mapContainerRef.current, { zoomControl: false }).setView([41.895, 12.48], 14);
 
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
@@ -37,13 +39,16 @@ const MapComponent: React.FC<MapProps> = ({ activities, userLocation, focusedLoc
     };
   }, []);
 
+  // Update Markers and Routes
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
+    // Clear existing layers
     layersRef.current.forEach(layer => layer.remove());
     layersRef.current = [];
 
+    // Define icons
     const poiIcon = L.divIcon({
       className: 'poi-marker',
       html: '<div style="background-color: #8B0000; width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid white; box-shadow: 0 0 3px rgba(0,0,0,0.3);"></div>',
@@ -56,7 +61,7 @@ const MapComponent: React.FC<MapProps> = ({ activities, userLocation, focusedLoc
       iconSize: [6, 6]
     });
 
-    // Draw Walking Track (Line)
+    // Draw Walking Track from GPX data
     if (WALKING_TRACK_COORDS.length > 0) {
       const walkingTrack = L.polyline(WALKING_TRACK_COORDS, {
         color: '#D4AF37',
@@ -68,7 +73,7 @@ const MapComponent: React.FC<MapProps> = ({ activities, userLocation, focusedLoc
       layersRef.current.push(walkingTrack);
     }
 
-    // Major Itinerary Markers
+    // Add Key Activity Markers
     activities.forEach(act => {
       const marker = L.marker([act.coords.lat, act.coords.lng], { icon: poiIcon })
         .addTo(map)
@@ -76,17 +81,17 @@ const MapComponent: React.FC<MapProps> = ({ activities, userLocation, focusedLoc
       layersRef.current.push(marker);
     });
 
-    // POIs from GPX
+    // Add all POIs from the GPX waypoints list for context
     Object.entries(COORDS).forEach(([key, coord]) => {
-      if (key !== 'CIVITAVECCHIA_DOCK' && key !== 'CIVITAVECCHIA_STATION') {
-        const marker = L.marker([coord.lat, coord.lng], { icon: waypointIcon })
-          .addTo(map)
-          .bindPopup(`POI: ${key.replace('_', ' ')}`);
-        layersRef.current.push(marker);
-      }
+      // Avoid duplicating main activity locations
+      const name = key.replace(/_/g, ' ');
+      const marker = L.marker([coord.lat, coord.lng], { icon: waypointIcon })
+        .addTo(map)
+        .bindPopup(`<span style="font-size: 10px; font-weight: bold; color: #8b0000;">${name}</span>`);
+      layersRef.current.push(marker);
     });
 
-    // User Location
+    // User Location Marker
     if (userLocation) {
       const userIcon = L.divIcon({
         className: 'user-marker',
@@ -95,15 +100,19 @@ const MapComponent: React.FC<MapProps> = ({ activities, userLocation, focusedLoc
       });
       const marker = L.marker([userLocation.lat, userLocation.lng], { icon: userIcon, zIndexOffset: 1000 })
         .addTo(map)
-        .bindPopup("Tu ubicación");
+        .bindPopup("Estás aquí");
       layersRef.current.push(marker);
     }
   }, [activities, userLocation]);
 
+  // Focus Logic
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map || !focusedLocation) return;
-    map.flyTo([focusedLocation.lat, focusedLocation.lng], 16, { duration: 1.2 });
+
+    map.flyTo([focusedLocation.lat, focusedLocation.lng], 16, {
+      duration: 1.2
+    });
   }, [focusedLocation]);
 
   return <div ref={mapContainerRef} className="w-full h-full z-0" />;
