@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Roma Imperial 2026</title>
+    <meta name="theme-color" content="#8B0000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="apple-touch-icon" href="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhEmITawppNohDJ8yrB5o888YMWrpJEralMwMFGkTZk5sZhkGMQ1GvbuolJodMly8kmKLZT4C92Kv4YU_i1af3g37qbujkH2lQRWOp2M9YV8f72mjuEjje6ceLT63u6tqqNtQclutrF3ArKV3hEtRv7tdWzabxGzSWajw2p0_whKmJh9c869TEjq9MLc0k/s2048/Gemini_Generated_Image_1odwzv1odwzv1odw.png">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        imperial: { 50: '#fff1f1', 100: '#ffdfdf', 200: '#ffc5c5', 300: '#ff9d9d', 400: '#ff6464', 500: '#ff2d2d', 600: '#ed1515', 700: '#c80d0d', 800: '#a50f0f', 900: '#8b0000' },
+                        gold: { 500: '#D4AF37' },
+                        marble: { 500: '#F5F5F5' },
+                    },
+                    fontFamily: {
+                        sans: ['Roboto Condensed', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@300;400;700&display=swap" rel="stylesheet">
+
+    <style>
+        html, body { height: 100%; width: 100%; margin: 0; padding: 0; overscroll-behavior-y: none; }
+        body { font-family: 'Roboto Condensed', sans-serif; -webkit-tap-highlight-color: transparent; height: 100dvh; }
+        #root { height: 100%; width: 100%; display: flex; flex-direction: column; }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 overflow-hidden">
+    <div id="root" class="h-full"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.2.0",
+    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+    "lucide-react": "https://esm.sh/lucide-react@0.263.1",
+    "recharts": "https://esm.sh/recharts@2.12.0",
+    "leaflet": "https://esm.sh/leaflet@1.9.4",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/"
+  }
+}
+</script>
+
+    <script type="text/babel" data-type="module">
+        import React, { useState, useEffect, useMemo, useRef } from 'react';
+        import ReactDOM from 'react-dom/client';
+        import { 
+            CalendarClock, Map as MapIcon, Wallet, BookOpen, Anchor, 
+            AlertTriangle, CheckCircle2, Circle, Clock, MapPin, 
+            ArrowRight, Info, Volume2, Thermometer, ShoppingBag, 
+            Camera, Sun, Moon, CloudRain, ExternalLink, Ticket,
+            Instagram, Languages, Phone, Headphones, Play, Square, CreditCard, Utensils
+        } from 'lucide-react';
+
+        // --- CONSTANTS & DATA (ROMA IMPERIAL 2026) ---
+        const SHIP_DEPARTURE_TIME = "18:00";
+        const SHIP_ONBOARD_TIME = "17:30"; 
+        const STORAGE_KEY = 'roma_guide_final_v1_sync'; 
+        
+        const COORDS = {
+            CIVITAVECCHIA_DOCK: { lat: 42.097499, lng: 11.788778 },
+            CIVITAVECCHIA_STATION: { lat: 42.087946, lng: 11.7983 },
+            LARGO_DELLA_PACE: { lat: 42.096385, lng: 11.789507 },
+            TERMINI: { lat: 41.9014, lng: 12.5009 },
+            COLISEO: { lat: 41.890246, lng: 12.492374 },
+            CAMPIDOGLIO: { lat: 41.893317, lng: 12.48293 },
+            TREVI: { lat: 41.900936, lng: 12.483303 },
+            PANTEON: { lat: 41.899009, lng: 12.476792 },
+            SANT_ANGELO: { lat: 41.902643, lng: 12.466393 },
+            SAN_PEDRO: { lat: 41.902258, lng: 12.458279 },
+            STATION_SAN_PIETRO: { lat: 41.896275, lng: 12.454727 }
+        };
+
+        const INITIAL_ITINERARY = [
+            {
+                id: '1', title: 'Llegada a Puerto', startTime: '07:00', endTime: '07:15',
+                locationName: 'Civitavecchia', coords: COORDS.CIVITAVECCHIA_DOCK,
+                description: 'Atraco del barco. Prepárate para desembarcar de inmediato.',
+                keyDetails: 'Tip: Sé de los primeros en la fila de salida (cubierta 0) a las 07:15.',
+                priceEUR: 0, type: 'logistics', completed: false
+            },
+            {
+                id: '2', title: 'Shuttle a Largo della Pace', startTime: '07:15', endTime: '07:40',
+                locationName: 'Largo della Pace', coords: COORDS.CIVITAVECCHIA_DOCK,
+                description: 'Tomamos el Shuttle Bus gratuito desde el pie del barco hasta el centro de servicios.',
+                keyDetails: 'Punto de llegada oficial: Largo della Pace.',
+                priceEUR: 0, type: 'transport', completed: false
+            },
+            {
+                id: '3', title: 'Bus y Ticket BIRG', startTime: '08:09', endTime: '08:16',
+                locationName: 'Largo della Pace', endLocationName: 'Estación FFCC',
+                coords: COORDS.LARGO_DELLA_PACE, endCoords: COORDS.CIVITAVECCHIA_STATION,
+                description: 'Bus urbano a la estación. Compra el ticket BIRG (5 Zonas - 12€).',
+                keyDetails: '¡VALÍDALO! Cubre Tren RV, Metro y Bus en Roma todo el día.',
+                priceEUR: 12, type: 'transport', completed: false, notes: 'CRITICAL'
+            },
+            {
+                id: '4', title: 'Tren a Roma Termini', startTime: '08:36', endTime: '09:48',
+                locationName: 'Estación Civitavecchia', endLocationName: 'Roma Termini',
+                coords: COORDS.CIVITAVECCHIA_STATION, endCoords: COORDS.TERMINI,
+                description: 'Trayecto en tren Regional Veloce (RV).',
+                keyDetails: 'Siéntate a la derecha en el sentido de la marcha para ver el mar.',
+                priceEUR: 0, type: 'transport', completed: false,
+                notes: 'Si pierdes este tren, el siguiente es a las 08:58 (Pérdida de visita: 22 min).'
+            },
+            {
+                id: '5', title: 'Metro al Coliseo', startTime: '10:00', endTime: '10:10',
+                locationName: 'Roma Termini', endLocationName: 'Colosseo',
+                coords: COORDS.TERMINI, endCoords: COORDS.COLISEO,
+                description: 'Metro B (Azul) dirección LAURENTINA. 2 paradas.',
+                keyDetails: 'Bajar en la estación COLOSSEO. Intervalo reducido en Termini.',
+                priceEUR: 0, type: 'transport', completed: false
+            },
+            {
+                id: '6', title: 'Coliseo y Arco de Constantino', startTime: '10:10', endTime: '10:55',
+                locationName: 'Colosseo', coords: COORDS.COLISEO,
+                description: 'Vista exterior del Coliseo y Arco de Constantino.',
+                keyDetails: 'La mejor foto es desde la salida del metro, subiendo por Via Nicola Salvi.',
+                priceEUR: 0, type: 'sightseeing', completed: false,
+                instaTag: 'https://www.instagram.com/explore/tags/colosseo/'
+            },
+            {
+                id: '7', title: 'Campidoglio y Vittorio Emanuele', startTime: '10:55', endTime: '12:00',
+                locationName: 'Plaza del Campidoglio', coords: COORDS.CAMPIDOGLIO,
+                description: 'Subida al Campidoglio por Via dei Fori Imperiali.',
+                keyDetails: '¡Tiempo extra ganado! Visita relajada a la Loba Capitolina y Foros.',
+                priceEUR: 0, type: 'sightseeing', completed: false
+            },
+            {
+                id: '8', title: 'Fontana di Trevi', startTime: '12:00', endTime: '12:45',
+                locationName: 'Trevi', coords: COORDS.TREVI,
+                description: 'Lanzamiento de moneda. ¡Respeta las nuevas normas de aforo!',
+                keyDetails: 'Aforo 400 personas. Fila obligatoria. No sentarse ni comer.',
+                priceEUR: 0, type: 'sightseeing', completed: false,
+                instaTag: 'https://www.instagram.com/explore/tags/fontanaditrevi/'
+            },
+            {
+                id: '9', title: 'Panteón y Almuerzo', startTime: '12:45', endTime: '13:30',
+                locationName: 'Panteón', coords: COORDS.PANTEON,
+                description: 'Vista exterior del Panteón y Plaza Navona. Almuerzo rápido.',
+                keyDetails: '45 minutos para pizza al taglio y disfrutar del Panteón.',
+                priceEUR: 15, type: 'food', completed: false
+            },
+            {
+                id: '10', title: 'Castillo Sant’Angelo y Vaticano', startTime: '13:30', endTime: '14:10',
+                locationName: 'Castillo Sant\'Angelo', endLocationName: 'San Pedro',
+                coords: COORDS.SANT_ANGELO, endCoords: COORDS.SAN_PEDRO,
+                description: 'Cruce del puente peatonal y caminata a San Pedro.',
+                keyDetails: 'Vistas del Castillo y columnata de Bernini.',
+                priceEUR: 0, type: 'sightseeing', completed: false
+            },
+            {
+                id: '11', title: 'Regreso: Caminata a Roma S. Pietro', startTime: '14:10', endTime: '14:40',
+                locationName: 'Plaza San Pedro', endLocationName: 'Estación Roma S. Pietro',
+                coords: COORDS.SAN_PEDRO, endCoords: COORDS.STATION_SAN_PIETRO,
+                description: 'Caminata estratégica hacia la estación de San Pietro para evitar Termini.',
+                keyDetails: 'Margen para llegar con calma al tren de las 15:02.',
+                priceEUR: 0, type: 'logistics', completed: false
+            },
+            {
+                id: '12', title: 'Tren: Roma S. Pietro a Civitavecchia', startTime: '15:02', endTime: '16:02',
+                locationName: 'Estación Roma S. Pietro', endLocationName: 'Civitavecchia',
+                coords: COORDS.STATION_SAN_PIETRO, endCoords: COORDS.CIVITAVECCHIA_STATION,
+                description: 'Tren regional de regreso. Trayecto directo a Civitavecchia.',
+                keyDetails: 'BIRG válido para el regreso. ¡No pierdas este tren de las 15:02!',
+                priceEUR: 0, type: 'transport', completed: false, notes: 'Aviso: Próximo tren: 15:35.'
+            },
+            {
+                id: '13', title: 'Regreso al Muelle', startTime: '16:02', endTime: '16:45',
+                locationName: 'Civitavecchia', coords: COORDS.CIVITAVECCHIA_STATION,
+                description: 'Bus o caminata de regreso al punto de encuentro del Shuttle.',
+                keyDetails: 'Llega con margen para el último Shuttle al barco.',
+                priceEUR: 0, type: 'logistics', completed: false
+            },
+            {
+                id: '14', title: '¡A BORDO! (Límite 17:30)', startTime: '17:30', endTime: '17:30',
+                locationName: 'Muelle del Barco', coords: COORDS.CIVITAVECCHIA_DOCK,
+                description: 'Hora límite de embarque absoluto.',
+                keyDetails: 'CRITICAL: Se retira la pasarela.',
+                priceEUR: 0, type: 'logistics', completed: false, notes: 'CRITICAL'
+            },
+            {
+                id: '15', title: 'Zarpe del Barco', startTime: '18:00', endTime: '18:00',
+                locationName: 'Mar Tirreno', coords: COORDS.CIVITAVECCHIA_DOCK,
+                description: 'El MSC Euribia zarpa hacia su siguiente escala.',
+                keyDetails: 'Fin de la jornada Imperial.',
+                priceEUR: 0, type: 'logistics', completed: false
+            }
+        ];
+
+        const WALKING_ROUTE_POIS = [
+            { name: "COLISEO", lat: 41.890246, lng: 12.492374 },
+            { name: "ARCO DE CONSTANTINO", lat: 41.889756, lng: 12.490657 },
+            { name: "VISTA DEL FORO", lat: 41.891274, lng: 12.490416 },
+            { name: "LOBA CAPITULINA", lat: 41.893287, lng: 12.483649 },
+            { name: "PLAZA CAMPIDOGLIO", lat: 41.893317, lng: 12.48293 },
+            { name: "FONTANA DI TREVI", lat: 41.900936, lng: 12.483303 },
+            { name: "PANTEON", lat: 41.899009, lng: 12.476792 },
+            { name: "PLAZA NAVONA", lat: 41.89916, lng: 12.473091 },
+            { name: "PUENTE SAN ANGELO", lat: 41.901901, lng: 12.466464 },
+            { name: "CASTILLO SAN ANGELO", lat: 41.902643, lng: 12.466393 },
+            { name: "PLAZA SAN PEDRO", lat: 41.902258, lng: 12.458279 },
+            { name: "ESTACIÓN ROMA SAN PIETRO", lat: 41.896275, lng: 12.454727 }
+        ];
+
+        // --- COMPONENTS ---
+
+        const Timeline = ({ itinerary, onToggleComplete, onLocate, userLocation }) => {
+            return (
+                <div className="pb-32 px-4 pt-4 max-w-lg mx-auto h-full overflow-y-auto no-scrollbar">
+                    <h2 className="text-2xl font-bold text-imperial-900 mb-6 flex items-center">
+                       <CalendarClock className="mr-2" /> Timeline Roma 2026
+                    </h2>
+                    <div className="relative border-l-2 border-imperial-200 ml-3">
+                        {itinerary.map((act) => (
+                            <div key={act.id} className="mb-8 ml-6 relative">
+                                <div 
+                                    className={`absolute -left-[31px] top-0 rounded-full bg-white border-2 cursor-pointer z-10 transition-all ${act.completed ? 'border-green-500 text-green-500 scale-90' : 'border-imperial-600 text-imperial-600 shadow-sm'}`}
+                                    onClick={() => onToggleComplete(act.id)}
+                                >
+                                    {act.completed ? <CheckCircle2 size={24} /> : <Circle size={24} />}
+                                </div>
+                                <div 
+                                    className={`p-4 rounded-xl border shadow-sm bg-white border-imperial-50 transition-opacity ${act.completed ? 'opacity-50' : ''}`}
+                                    onClick={() => onLocate(act.coords)}
+                                >
+                                    <div className="flex items-center space-x-2 mb-1">
+                                        <span className="bg-imperial-900 text-white px-2 py-0.5 rounded-full text-[10px] font-black">{act.startTime}</span>
+                                        {act.notes?.includes('CRITICAL') || act.notes?.includes('Aviso') ? <AlertTriangle size={14} className="text-red-500 animate-pulse" /> : null}
+                                    </div>
+                                    <h3 className="font-bold text-lg text-slate-800 leading-tight">{act.title}</h3>
+                                    <p className="text-xs text-slate-500 mb-2 uppercase font-bold tracking-tighter flex items-center">
+                                       <MapPin size={10} className="mr-1" /> {act.locationName}
+                                    </p>
+                                    <div className="bg-slate-50 p-2 rounded text-xs italic text-slate-700 border-l-2 border-gold-500">"{act.keyDetails}"</div>
+                                    {act.notes && <p className="mt-2 text-[10px] text-red-600 font-bold uppercase">{act.notes}</p>}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        const Budget = () => (
+            <div className="pb-32 px-4 pt-6 max-w-lg mx-auto h-full overflow-y-auto">
+                <h2 className="text-2xl font-bold text-imperial-900 mb-6 flex items-center"><Wallet className="mr-2"/> Gastos</h2>
+                <div className="bg-imperial-900 text-white p-6 rounded-2xl shadow-xl mb-6">
+                    <p className="text-imperial-200 text-xs uppercase mb-1">Total Estimado</p>
+                    <div className="text-5xl font-black">39.00 €</div>
+                </div>
+                <div className="space-y-3">
+                    {[
+                        { name: 'Ticket BIRG (5 Zonas)', price: '12.00 €' },
+                        { name: 'Almuerzo (Pizza + Bebida)', price: '15.00 €' },
+                        { name: 'Extras (Café, Helado, Baños)', price: '12.00 €' }
+                    ].map(item => (
+                        <div key={item.name} className="flex justify-between p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
+                            <span className="font-bold text-slate-700">{item.name}</span>
+                            <span className="font-black text-imperial-700">{item.price}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+
+        const Guide = () => (
+            <div className="pb-32 px-4 pt-6 max-w-lg mx-auto h-full overflow-y-auto">
+                <h2 className="text-2xl font-bold text-imperial-900 mb-6 flex items-center"><BookOpen className="mr-2"/> Guía</h2>
+                <div className="space-y-4">
+                    <div className="bg-white p-4 rounded-xl border border-slate-200">
+                        <h3 className="font-black text-imperial-800 flex items-center mb-2"><Utensils size={18} className="mr-2"/> Comer "Al Banco"</h3>
+                        <p className="text-sm text-slate-600 italic">El café y el pan son mucho más baratos si los consumes de pie en la barra. Evita las mesas en zonas turísticas.</p>
+                    </div>
+                    <div className="bg-white p-4 rounded-xl border border-slate-200">
+                        <h3 className="font-black text-imperial-800 flex items-center mb-2"><Ticket size={18} className="mr-2"/> Ticket BIRG</h3>
+                        <p className="text-sm text-slate-600 italic">Escribe tu nombre y fecha. Valídalo en las máquinas verdes antes de subir al tren. ¡Evita multas!</p>
+                    </div>
+                </div>
+            </div>
+        );
+
+        const MapComponent = ({ focusedLocation }) => {
+            const mapRef = useRef(null);
+            const mapInstance = useRef(null);
+
+            useEffect(() => {
+                if(!mapRef.current) return;
+                if(!mapInstance.current) {
+                    mapInstance.current = L.map(mapRef.current, { zoomControl: false }).setView([41.89, 12.48], 13);
+                    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                        attribution: '&copy; OpenStreetMap'
+                    }).addTo(mapInstance.current);
+                }
+                const map = mapInstance.current;
+                
+                const pinIcon = L.divIcon({
+                    className: 'custom-pin',
+                    html: '<div style="background-color:#8b0000;width:10px;height:10px;border-radius:50%;border:2px solid white;box-shadow:0 0 5px rgba(0,0,0,0.3);"></div>',
+                    iconSize: [10, 10]
+                });
+
+                WALKING_ROUTE_POIS.forEach(poi => {
+                    L.marker([poi.lat, poi.lng], { icon: pinIcon }).addTo(map).bindPopup(`<span class="font-bold">${poi.name}</span>`);
+                });
+
+                if(focusedLocation) map.flyTo([focusedLocation.lat, focusedLocation.lng], 16);
+            }, [focusedLocation]);
+
+            return <div ref={mapRef} className="w-full h-full z-0" />;
+        };
+
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('timeline');
+            const [itinerary, setItinerary] = useState(INITIAL_ITINERARY);
+            const [mapFocus, setMapFocus] = useState(null);
+            const [countdown, setCountdown] = useState('');
+
+            useEffect(() => {
+                const interval = setInterval(() => {
+                    const now = new Date();
+                    const target = new Date();
+                    const [h, m] = SHIP_ONBOARD_TIME.split(':').map(Number);
+                    target.setHours(h, m, 0);
+                    const diff = target - now;
+                    if(diff < 0) setCountdown("¡A BORDO!");
+                    else {
+                        const hh = Math.floor(diff / 3600000);
+                        const mm = Math.floor((diff % 3600000) / 60000);
+                        const ss = Math.floor((diff % 60000) / 1000);
+                        setCountdown(`${hh}h ${mm}m ${ss}s`);
+                    }
+                }, 1000);
+                return () => clearInterval(interval);
+            }, []);
+
+            const toggleComplete = (id) => {
+                const next = itinerary.map(a => a.id === id ? { ...a, completed: !a.completed } : a);
+                setItinerary(next);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+            };
+
+            const handleLocate = (coords) => {
+                setMapFocus(coords);
+                setActiveTab('map');
+            };
+
+            return (
+                <div className="flex flex-col h-full bg-slate-50 font-sans">
+                    <header className="bg-imperial-900 text-white p-4 shadow-lg z-20 flex justify-between items-center shrink-0">
+                        <div className="flex items-center">
+                            <Anchor className="mr-2 text-gold-500" size={20} />
+                            <div>
+                                <h1 className="font-bold text-xs text-gold-500 uppercase tracking-widest">Roma 2026: 16 Abril</h1>
+                                <p className="text-[10px] text-imperial-200">Onboard: {SHIP_ONBOARD_TIME}</p>
+                            </div>
+                        </div>
+                        <div className="text-right">
+                            <div className="text-xl font-mono font-bold text-white tabular-nums">{countdown}</div>
+                        </div>
+                    </header>
+
+                    <main className="flex-1 overflow-hidden relative">
+                        {activeTab === 'timeline' && <Timeline itinerary={itinerary} onToggleComplete={toggleComplete} onLocate={handleLocate} />}
+                        {activeTab === 'map' && <MapComponent focusedLocation={mapFocus} />}
+                        {activeTab === 'budget' && <Budget />}
+                        {activeTab === 'guide' && <Guide />}
+                    </main>
+
+                    <nav className="bg-white border-t border-slate-200 shadow-[0_-5px_15px_rgba(0,0,0,0.05)] z-30 pb-safe shrink-0">
+                        <div className="flex justify-around items-center h-16">
+                            {[
+                                { id: 'timeline', icon: CalendarClock, label: 'Timeline' },
+                                { id: 'map', icon: MapIcon, label: 'Mapa' },
+                                { id: 'budget', icon: Wallet, label: 'Gastos' },
+                                { id: 'guide', icon: BookOpen, label: 'Guía' }
+                            ].map(tab => (
+                                <button 
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={`flex flex-col items-center w-full h-full justify-center transition-colors ${activeTab === tab.id ? 'text-imperial-600' : 'text-slate-400'}`}
+                                >
+                                    <tab.icon size={22} strokeWidth={activeTab === tab.id ? 2.5 : 2} />
+                                    <span className="text-[10px] mt-1 font-bold uppercase tracking-tighter">{tab.label}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </nav>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

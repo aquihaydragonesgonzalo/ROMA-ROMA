@@ -1,0 +1,21 @@
+{
+  "name": "Copenhague 2026",
+  "short_name": "Copenhague",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#2A5B87",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjEmITawppNohDJ8yrB5o888YMWrpJEralMwMFGkTZk5sZhkGMQ1GvbuolJodMly8kmKLZT4C92Kv4YU_i1af3g37qbujkH2lQRWOp2M9YV8f72mjuEjje6ceLT63u6tqqNtQclutrF3ArKV3hEtRv7tdWzabxGzSWajw2p0_whKmJh9c869TEjq9MLc0k/s2048/Gemini_Generated_Image_1odwzv1odwzv1odw.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjEmITawppNohDJ8yrB5o888YMWrpJEralMwMFGkTZk5sZhkGMQ1GvbuolJodMly8kmKLZT4C92Kv4YU_i1af3g37qbujkH2lQRWOp2M9YV8f72mjuEjje6ceLT63u6tqqNtQclutrF3ArKV3hEtRv7tdWzabxGzSWajw2p0_whKmJh9c869TEjq9MLc0k/s2048/Gemini_Generated_Image_1odwzv1odwzv1odw.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

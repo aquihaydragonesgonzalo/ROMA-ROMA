@@ -1,0 +1,7 @@
+{
+  "name": "Roma Imperial 2026",
+  "description": "Tu asistente personal para la escala en Roma (Civitavecchia) el 16 de Abril de 2026. Itinerario, mapa interactivo y control de gastos.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
